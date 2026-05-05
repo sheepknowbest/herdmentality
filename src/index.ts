@@ -135,19 +135,19 @@ export default {
   <h1>🐑 Sheep Know Best</h1>
   <p class="subtitle">Top 5 MMO Gaming Mice by Popularity</p>
   <div class="leaderboard">
-    ${top5.map((mouse, index) => \`
+    ${top5.map((mouse, index) => `
       <div class="card">
-        <div class="rank">#\${index + 1}</div>
+        <div class="rank">#${index + 1}</div>
         <div class="details">
-          <h2 class="name"><a href="\${mouse.url}" target="_blank">\${mouse.name}</a></h2>
+          <h2 class="name"><a href="${mouse.url}" target="_blank">${mouse.name}</a></h2>
           <div class="stats">
-            <span class="price">$\${mouse.price}</span> &bull; 
-            ⭐ \${mouse.rating} &bull; 
-            📝 \${mouse.reviewCount.toLocaleString()} reviews
+            <span class="price">$${mouse.price}</span> &bull; 
+            ⭐ ${mouse.rating} &bull; 
+            📝 ${mouse.reviewCount.toLocaleString()} reviews
           </div>
         </div>
       </div>
-    \`).join('')}
+    `).join('')}
   </div>
 </body>
 </html>`;
