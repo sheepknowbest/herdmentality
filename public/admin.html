@@ -46,6 +46,8 @@
     }
     input[type="text"],
     input[type="number"],
+    input[type="password"],
+    select,
     textarea,
     input[type="file"] {
       width: 100%;
@@ -56,7 +58,7 @@
       font-family: inherit;
       box-sizing: border-box;
     }
-    input:focus, textarea:focus {
+    input:focus, textarea:focus, select:focus {
       outline: none;
       border-color: var(--soft-gold);
       box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
@@ -88,6 +90,23 @@
       background-color: var(--gray);
       cursor: not-allowed;
     }
+    .delete-btn {
+      width: 100%;
+      padding: 1rem;
+      background-color: #dc3545;
+      color: var(--white);
+      font-size: 1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 0.5rem;
+      display: none;
+    }
+    .delete-btn:hover {
+      background-color: #c82333;
+    }
     .message {
       padding: 1rem;
       margin-bottom: 1.5rem;
@@ -98,6 +117,16 @@
     }
     .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
     .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .edit-mode-indicator {
+      background: var(--soft-gold);
+      color: white;
+      padding: 0.5rem;
+      border-radius: 4px;
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 1.5rem;
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -106,15 +135,30 @@
     
     <div id="statusMessage" class="message"></div>
 
+    <div class="form-group">
+      <label for="adminPassword">Admin Password (Required for all actions)</label>
+      <input type="password" id="adminPassword" placeholder="Enter super secret password..." required>
+    </div>
+
+    <hr style="border: 0; border-top: 1px solid var(--light-gray); margin: 2rem 0;">
+
+    <div class="form-group">
+      <label for="productSelect">Select Product to Edit (or create new)</label>
+      <select id="productSelect">
+        <option value="">-- Create New Product --</option>
+      </select>
+    </div>
+
+    <div id="editModeIndicator" class="edit-mode-indicator">✏️ EDITING EXISTING PRODUCT</div>
+
     <form id="productForm">
-      <div class="form-group">
-        <label for="adminPassword">Admin Password</label>
-        <input type="password" id="adminPassword" placeholder="Enter super secret password..." required>
-      </div>
+      <input type="hidden" id="productId" name="id">
+      <input type="hidden" id="existingImageURL" name="existingImageURL">
 
       <div class="form-group">
-        <label for="image">Upload Product Image</label>
-        <input type="file" id="image" name="image" accept="image/*" required>
+        <label for="image">Upload Product Image (Optional if editing)</label>
+        <input type="file" id="image" name="image" accept="image/*">
+        <small id="currentImageHint" style="display:none; color:#666; margin-top:5px;">Leave empty to keep current image.</small>
       </div>
 
       <div class="form-group">
@@ -150,11 +194,75 @@
         <textarea id="sheepTake" name="sheepTake" placeholder="Why is this product the Herd Leader?..." required></textarea>
       </div>
 
-      <button type="submit" class="submit-btn" id="submitBtn">Publish to Site</button>
+      <button type="submit" class="submit-btn" id="submitBtn">Publish Product</button>
+      <button type="button" class="delete-btn" id="deleteBtn">🗑️ Delete Product</button>
     </form>
   </div>
 
   <script>
+    let productsList = [];
+
+    // Load existing products into dropdown
+    async function loadProducts() {
+      try {
+        const response = await fetch('/api/products');
+        productsList = await response.json();
+        
+        const select = document.getElementById('productSelect');
+        // keep the first option, remove the rest
+        select.innerHTML = '<option value="">-- Create New Product --</option>';
+        
+        productsList.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = `${p.productName} (${p.category})`;
+          select.appendChild(opt);
+        });
+      } catch (err) {
+        console.error("Failed to load products", err);
+      }
+    }
+
+    // Handle dropdown selection
+    document.getElementById('productSelect').addEventListener('change', (e) => {
+      const id = e.target.value;
+      const form = document.getElementById('productForm');
+      const editIndicator = document.getElementById('editModeIndicator');
+      const deleteBtn = document.getElementById('deleteBtn');
+      const currentImageHint = document.getElementById('currentImageHint');
+      const submitBtn = document.getElementById('submitBtn');
+
+      if (!id) {
+        // Reset to Create New
+        form.reset();
+        document.getElementById('productId').value = '';
+        document.getElementById('existingImageURL').value = '';
+        editIndicator.style.display = 'none';
+        deleteBtn.style.display = 'none';
+        currentImageHint.style.display = 'none';
+        submitBtn.textContent = 'Publish New Product';
+        return;
+      }
+
+      // Populate form for Edit
+      const p = productsList.find(prod => prod.id == id);
+      if (p) {
+        document.getElementById('productId').value = p.id;
+        document.getElementById('existingImageURL').value = p.imageURL;
+        document.getElementById('category').value = p.category;
+        document.getElementById('subCategory').value = p.subCategory;
+        document.getElementById('productName').value = p.productName;
+        document.getElementById('reviewCount').value = p.reviewCount;
+        document.getElementById('affiliateLink').value = p.affiliateLink;
+        document.getElementById('sheepTake').value = p.sheepTake;
+        
+        editIndicator.style.display = 'block';
+        deleteBtn.style.display = 'block';
+        currentImageHint.style.display = 'block';
+        submitBtn.textContent = 'Update Product';
+      }
+    });
+
     document.getElementById('generateBtn').addEventListener('click', async () => {
       const productName = document.getElementById('productName').value;
       const category = document.getElementById('category').value;
@@ -209,6 +317,19 @@
       const statusDiv = document.getElementById('statusMessage');
       const adminPassword = document.getElementById('adminPassword').value;
       
+      if (!adminPassword) {
+        alert("Please enter the Admin Password at the top.");
+        return;
+      }
+
+      // Check if image is required (new product)
+      const imageFile = document.getElementById('image').files[0];
+      const isEditing = !!document.getElementById('productId').value;
+      if (!isEditing && !imageFile) {
+        alert("An image is required for new products.");
+        return;
+      }
+
       const formData = new FormData(form);
       
       btn.disabled = true;
@@ -230,7 +351,8 @@
           statusDiv.className = 'message success';
           statusDiv.textContent = result.message;
           statusDiv.style.display = 'block';
-          form.reset();
+          if (!isEditing) form.reset();
+          loadProducts(); // refresh the list
         } else {
           throw new Error(result.error || 'Unknown error occurred.');
         }
@@ -240,9 +362,52 @@
         statusDiv.style.display = 'block';
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Publish to Site';
+        btn.textContent = isEditing ? 'Update Product' : 'Publish New Product';
       }
     });
+
+    document.getElementById('deleteBtn').addEventListener('click', async () => {
+      const id = document.getElementById('productId').value;
+      const adminPassword = document.getElementById('adminPassword').value;
+      
+      if (!adminPassword) {
+        alert("Please enter the Admin Password at the top.");
+        return;
+      }
+      
+      if (!confirm("Are you absolutely sure you want to delete this product? This cannot be undone.")) {
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/admin/products/' + id, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': 'Bearer ' + adminPassword
+          }
+        });
+
+        const result = await response.json();
+        const statusDiv = document.getElementById('statusMessage');
+
+        if (response.ok && result.success) {
+          statusDiv.className = 'message success';
+          statusDiv.textContent = result.message;
+          statusDiv.style.display = 'block';
+          document.getElementById('productForm').reset();
+          document.getElementById('productSelect').value = '';
+          document.getElementById('productSelect').dispatchEvent(new Event('change'));
+          loadProducts(); // refresh the list
+        } else {
+          throw new Error(result.error || 'Unknown error occurred.');
+        }
+      } catch (err) {
+        alert('Delete failed: ' + err.message);
+      }
+    });
+
+    // Initialize
+    loadProducts();
   </script>
 </body>
 </html>

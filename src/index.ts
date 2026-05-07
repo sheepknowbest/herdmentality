@@ -95,11 +95,26 @@ export default {
     }
 
     // ==========================================
-    // 4. ADMIN API: Upload Image & Create Product
+    // 4. ADMIN API: Create, Update, or Delete Product
     // ==========================================
+    if (request.method === "DELETE" && url.pathname.startsWith("/api/admin/products/")) {
+      try {
+        const id = parseInt(url.pathname.split("/").pop() || "0", 10);
+        if (id) {
+          await env.DB.prepare(`DELETE FROM products WHERE id = ?`).bind(id).run();
+        }
+        return new Response(JSON.stringify({ success: true, message: "Product deleted." }), { headers: { "Content-Type": "application/json" } });
+      } catch (err: any) {
+        return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { "Content-Type": "application/json" } });
+      }
+    }
+
     if (request.method === "POST" && url.pathname === "/api/admin/products") {
       try {
         const formData = await request.formData();
+        
+        const idStr = formData.get("id")?.toString();
+        const id = idStr ? parseInt(idStr, 10) : null;
         
         const category = formData.get("category")?.toString() || "";
         const subCategory = formData.get("subCategory")?.toString() || "";
@@ -109,34 +124,45 @@ export default {
         const affiliateLink = formData.get("affiliateLink")?.toString() || "";
         const sheepTake = formData.get("sheepTake")?.toString() || "";
         const imageFile = formData.get("image") as File | null;
+        let imageURL = formData.get("existingImageURL")?.toString() || "";
 
-        if (!imageFile || !imageFile.name) {
-          return new Response(JSON.stringify({ error: "Missing image file" }), { 
+        if (!id && (!imageFile || !imageFile.name)) {
+          return new Response(JSON.stringify({ error: "Missing image file for new product" }), { 
             status: 400, headers: { "Content-Type": "application/json" } 
           });
         }
 
-        // Generate a safe unique filename to avoid overwrites
-        const uniqueId = crypto.randomUUID();
-        const extension = imageFile.name.split('.').pop() || 'png';
-        const imageName = `${uniqueId}.${extension}`;
-        
-        // Upload the raw file stream directly into the R2 Bucket
-        await env.IMAGES.put(imageName, imageFile.stream(), {
-          httpMetadata: { contentType: imageFile.type }
-        });
+        // If a new image was uploaded, process it
+        if (imageFile && imageFile.name && imageFile.size > 0) {
+          const uniqueId = crypto.randomUUID();
+          const extension = imageFile.name.split('.').pop() || 'png';
+          const imageName = `${uniqueId}.${extension}`;
+          
+          await env.IMAGES.put(imageName, imageFile.stream(), {
+            httpMetadata: { contentType: imageFile.type }
+          });
 
-        const imageURL = `/images/${imageName}`;
+          imageURL = `/images/${imageName}`;
+        }
 
-        // Insert the new product record into the D1 SQL database
-        await env.DB.prepare(
-          `INSERT INTO products (category, subCategory, productName, reviewCount, imageURL, affiliateLink, sheepTake) 
-           VALUES (?, ?, ?, ?, ?, ?, ?)`
-        ).bind(
-          category, subCategory, productName, reviewCount, imageURL, affiliateLink, sheepTake
-        ).run();
+        if (id) {
+          // Update existing record
+          await env.DB.prepare(
+            `UPDATE products SET category = ?, subCategory = ?, productName = ?, reviewCount = ?, imageURL = ?, affiliateLink = ?, sheepTake = ? WHERE id = ?`
+          ).bind(
+            category, subCategory, productName, reviewCount, imageURL, affiliateLink, sheepTake, id
+          ).run();
+        } else {
+          // Insert new record
+          await env.DB.prepare(
+            `INSERT INTO products (category, subCategory, productName, reviewCount, imageURL, affiliateLink, sheepTake) 
+             VALUES (?, ?, ?, ?, ?, ?, ?)`
+          ).bind(
+            category, subCategory, productName, reviewCount, imageURL, affiliateLink, sheepTake
+          ).run();
+        }
 
-        return new Response(JSON.stringify({ success: true, message: "Product successfully published!" }), {
+        return new Response(JSON.stringify({ success: true, message: id ? "Product updated!" : "Product published!" }), {
           headers: { "Content-Type": "application/json" }
         });
         
