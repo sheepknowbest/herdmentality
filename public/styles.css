@@ -29,10 +29,11 @@ body {
 }
 
 .logo-banner {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: block;
   width: 100%;
+  max-height: 350px;
+  object-fit: cover;
+  object-position: center;
+  display: block;
 }
 
 .nav-bar {
