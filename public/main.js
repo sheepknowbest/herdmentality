@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-  fetch('data.json')
+  fetch('/api/products')
     .then(response => response.json())
     .then(data => {
       // Sort by reviewCount descending to ensure the "Herd Leader" is first
