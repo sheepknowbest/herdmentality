@@ -24,9 +24,6 @@ document.addEventListener('DOMContentLoaded', () => {
             <p>${product.sheepTake}</p>
           </div>
           <a href="${product.affiliateLink}" target="_blank" rel="noopener noreferrer" class="cta-button">View on Amazon</a>
-          <div class="card-footer">
-            <span>🐑</span> ${product.reviewCount.toLocaleString()} Reviews
-          </div>
         `;
         
         gridContainer.appendChild(card);
