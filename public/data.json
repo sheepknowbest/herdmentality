@@ -1,0 +1,52 @@
+[
+  {
+    "id": "1",
+    "category": "Gaming",
+    "subCategory": "MMO Mice",
+    "productName": "Logitech G600 MMO Gaming Mouse",
+    "reviewCount": 25432,
+    "imageURL": "https://m.media-amazon.com/images/I/61NiqkNnOLL._AC_SX679_.jpg",
+    "affiliateLink": "https://amazon.com/g600",
+    "sheepTake": "The undisputed heavyweight champion of MMO mice. Its massive 20-button layout and comfortable grip make it perfect for long raid sessions."
+  },
+  {
+    "id": "2",
+    "category": "Gaming",
+    "subCategory": "MMO Mice",
+    "productName": "Redragon M908 Impact RGB",
+    "reviewCount": 18402,
+    "imageURL": "https://m.media-amazon.com/images/I/61R1w9hE3hL._AC_SX679_.jpg",
+    "affiliateLink": "https://amazon.com/redragon-m908",
+    "sheepTake": "An incredibly budget-friendly option that punches above its weight class. A solid choice if you want lots of buttons without breaking the bank."
+  },
+  {
+    "id": "3",
+    "category": "Gaming",
+    "subCategory": "MMO Mice",
+    "productName": "UtechSmart Venus Pro",
+    "reviewCount": 12534,
+    "imageURL": "https://m.media-amazon.com/images/I/71Xm0oD0XIL._AC_SX679_.jpg",
+    "affiliateLink": "https://amazon.com/utechsmart",
+    "sheepTake": "A wireless marvel with a comfortable ergonomic rest for your ring finger. It offers reliable wireless performance for MMOs."
+  },
+  {
+    "id": "4",
+    "category": "Gaming",
+    "subCategory": "MMO Mice",
+    "productName": "Corsair Scimitar RGB Elite",
+    "reviewCount": 8931,
+    "imageURL": "https://m.media-amazon.com/images/I/61NrtE8-YFL._AC_SX679_.jpg",
+    "affiliateLink": "https://amazon.com/scimitar",
+    "sheepTake": "Features a patented slider system for the thumb grid. You can physically slide the entire keypad to match your thumb perfectly."
+  },
+  {
+    "id": "5",
+    "category": "Gaming",
+    "subCategory": "MMO Mice",
+    "productName": "Razer Naga V2 Pro",
+    "reviewCount": 1452,
+    "imageURL": "https://m.media-amazon.com/images/I/71+ZqBv6+oL._AC_SX679_.jpg",
+    "affiliateLink": "https://amazon.com/naga-v2-pro",
+    "sheepTake": "A versatile wireless beast with swappable side plates. It adapts to any game genre seamlessly, giving you true freedom without the wires."
+  }
+]

@@ -1,0 +1,194 @@
+:root {
+  --charcoal: #333333;
+  --soft-gold: #D4AF37;
+  --soft-gold-light: #fbf7ec;
+  --off-white: #F9F9F9;
+  --white: #FFFFFF;
+  --gray: #888888;
+  --light-gray: #E0E0E0;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  background-color: var(--off-white);
+  color: var(--charcoal);
+  line-height: 1.6;
+}
+
+/* Header */
+header {
+  text-align: center;
+  padding: 3rem 1rem 2rem 1rem;
+  background-color: var(--white);
+  border-bottom: 1px solid var(--light-gray);
+}
+
+.logo-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.logo-container h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--charcoal);
+  letter-spacing: -0.05em;
+}
+
+.logo-icon {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+/* Disclosure */
+.disclosure-container {
+  background-color: var(--light-gray);
+  padding: 1rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--charcoal);
+}
+
+.disclosure-text {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Main Content */
+main {
+  max-width: 1200px;
+  margin: 3rem auto;
+  padding: 0 1rem;
+}
+
+/* Grid Container */
+.grid-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .grid-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid-container {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1200px) {
+  .grid-container {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Product Card */
+.product-card {
+  background-color: var(--white);
+  border: 1px solid var(--light-gray);
+  border-radius: 8px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  height: 100%;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+}
+
+.card-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--gray);
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+}
+
+.card-image-link {
+  display: block;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.card-image {
+  max-width: 100%;
+  height: 200px;
+  object-fit: contain;
+}
+
+.card-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+.card-title a {
+  color: var(--charcoal);
+  text-decoration: none;
+}
+
+.card-title a:hover {
+  color: var(--soft-gold);
+}
+
+.sheeps-take {
+  background-color: var(--soft-gold-light);
+  border-left: 4px solid var(--soft-gold);
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  color: var(--charcoal);
+  flex-grow: 1;
+}
+
+.sheeps-take-title {
+  font-weight: bold;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  color: var(--soft-gold);
+}
+
+.cta-button {
+  display: block;
+  background-color: var(--charcoal);
+  color: var(--white);
+  text-align: center;
+  padding: 0.8rem 1rem;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+  margin-bottom: 1rem;
+}
+
+.cta-button:hover {
+  background-color: #000000;
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-top: 1px solid var(--light-gray);
+  padding-top: 1rem;
+  font-size: 0.85rem;
+  color: var(--gray);
+}

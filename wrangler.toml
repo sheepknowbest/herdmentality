@@ -1,3 +1,4 @@
 name = "herdmentality"
 main = "src/index.ts"
 compatibility_date = "2024-04-05"
+assets = { directory = "./public" }
