@@ -58,19 +58,32 @@ export default {
     // ==========================================
     if (request.method === "POST" && url.pathname === "/api/admin/generate") {
       try {
-        const { productName, category } = await request.json();
+        const { productName, category, originalText } = await request.json();
         
-        const prompt = `Write a fun, punchy, 2-sentence review (under 40 words) about why the ${productName} (${category}) is the absolute best product in its class. Refer to yourself as 'The Sheep' or use a sheep/herd metaphor.`;
+        let prompt = "";
+        if (originalText && originalText.trim().length > 0) {
+          prompt = `Rewrite the following text into a fun, punchy, 2-sentence review (under 40 words) explaining why the ${productName} (${category}) is a winner. Make sure the tone is compliant with Amazon's affiliate policies (focus on value, avoid false guarantees). Refer to yourself as 'The Sheep' or use a sheep/herd metaphor.\n\nOriginal text to rewrite:\n"${originalText}"`;
+        } else {
+          prompt = `Write a fun, punchy, 2-sentence review (under 40 words) about why the ${productName} (${category}) is a winner and the best product in its class. Make sure the tone is compliant with Amazon's affiliate policies. Refer to yourself as 'The Sheep' or use a sheep/herd metaphor.`;
+        }
 
-        const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${env.GEMINI_API_KEY}`, {
+        const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'X-goog-api-key': env.GEMINI_API_KEY || ''
+          },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }]
           })
         });
 
         const data = await geminiResponse.json();
+        
+        if (!geminiResponse.ok) {
+           throw new Error(data.error?.message || "Google API returned an error.");
+        }
+
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "Error generating text.";
 
         return new Response(JSON.stringify({ text }), {

@@ -181,7 +181,11 @@
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + adminPassword
           },
-          body: JSON.stringify({ productName, category })
+          body: JSON.stringify({ 
+            productName, 
+            category,
+            originalText: sheepTake.value
+          })
         });
 
         if (response.status === 401) throw new Error("Invalid password!");
