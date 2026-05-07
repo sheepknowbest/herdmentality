@@ -1,6 +1,8 @@
 export interface Env {
   DB: D1Database;
   IMAGES: R2Bucket;
+  ADMIN_SECRET: string;
+  GEMINI_API_KEY: string;
 }
 
 export default {
@@ -39,7 +41,48 @@ export default {
     }
 
     // ==========================================
-    // 3. ADMIN API: Upload Image & Create Product
+    // SECURITY CHECK FOR ADMIN ROUTES
+    // ==========================================
+    if (url.pathname.startsWith("/api/admin/")) {
+      const authHeader = request.headers.get("Authorization");
+      if (!authHeader || authHeader !== `Bearer ${env.ADMIN_SECRET}`) {
+        return new Response(JSON.stringify({ error: "Unauthorized. Invalid Password." }), { 
+          status: 401, 
+          headers: { "Content-Type": "application/json" } 
+        });
+      }
+    }
+
+    // ==========================================
+    // 3. ADMIN API: Generate AI Prose with Gemini
+    // ==========================================
+    if (request.method === "POST" && url.pathname === "/api/admin/generate") {
+      try {
+        const { productName, category } = await request.json();
+        
+        const prompt = `Write a fun, punchy, 2-sentence review (under 40 words) about why the ${productName} (${category}) is the absolute best product in its class. Refer to yourself as 'The Sheep' or use a sheep/herd metaphor.`;
+
+        const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${env.GEMINI_API_KEY}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }]
+          })
+        });
+
+        const data = await geminiResponse.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "Error generating text.";
+
+        return new Response(JSON.stringify({ text }), {
+          headers: { "Content-Type": "application/json" }
+        });
+      } catch (err: any) {
+        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+      }
+    }
+
+    // ==========================================
+    // 4. ADMIN API: Upload Image & Create Product
     // ==========================================
     if (request.method === "POST" && url.pathname === "/api/admin/products") {
       try {
@@ -70,7 +113,6 @@ export default {
           httpMetadata: { contentType: imageFile.type }
         });
 
-        // Generate the public URL that points to our GET /images/ endpoint
         const imageURL = `/images/${imageName}`;
 
         // Insert the new product record into the D1 SQL database
@@ -78,13 +120,7 @@ export default {
           `INSERT INTO products (category, subCategory, productName, reviewCount, imageURL, affiliateLink, sheepTake) 
            VALUES (?, ?, ?, ?, ?, ?, ?)`
         ).bind(
-          category, 
-          subCategory, 
-          productName, 
-          reviewCount, 
-          imageURL, 
-          affiliateLink, 
-          sheepTake
+          category, subCategory, productName, reviewCount, imageURL, affiliateLink, sheepTake
         ).run();
 
         return new Response(JSON.stringify({ success: true, message: "Product successfully published!" }), {
@@ -93,14 +129,11 @@ export default {
         
       } catch (err: any) {
         return new Response(JSON.stringify({ success: false, error: err.message }), {
-          status: 500,
-          headers: { "Content-Type": "application/json" }
+          status: 500, headers: { "Content-Type": "application/json" }
         });
       }
     }
 
-    // Note: Cloudflare's 'assets' binding will serve static files like index.html 
-    // before this fetch handler is ever hit. If we arrive here, it's a 404.
     return new Response("Endpoint Not Found", { status: 404 });
   }
 };

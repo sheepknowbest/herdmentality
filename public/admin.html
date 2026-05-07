@@ -108,6 +108,11 @@
 
     <form id="productForm">
       <div class="form-group">
+        <label for="adminPassword">Admin Password</label>
+        <input type="password" id="adminPassword" placeholder="Enter super secret password..." required>
+      </div>
+
+      <div class="form-group">
         <label for="image">Upload Product Image</label>
         <input type="file" id="image" name="image" accept="image/*" required>
       </div>
@@ -138,7 +143,10 @@
       </div>
 
       <div class="form-group">
-        <label for="sheepTake">The Sheep's Take</label>
+        <label for="sheepTake" style="display:flex; justify-content:space-between; align-items:center;">
+          The Sheep's Take
+          <button type="button" id="generateBtn" style="padding: 0.3rem 0.6rem; background: #e8e8e8; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">✨ Auto-Generate with Gemini</button>
+        </label>
         <textarea id="sheepTake" name="sheepTake" placeholder="Why is this product the Herd Leader?..." required></textarea>
       </div>
 
@@ -147,12 +155,55 @@
   </div>
 
   <script>
+    document.getElementById('generateBtn').addEventListener('click', async () => {
+      const productName = document.getElementById('productName').value;
+      const category = document.getElementById('category').value;
+      const adminPassword = document.getElementById('adminPassword').value;
+      const sheepTake = document.getElementById('sheepTake');
+      const genBtn = document.getElementById('generateBtn');
+
+      if (!productName || !category) {
+        alert("Please fill in Category and Product Name first.");
+        return;
+      }
+      if (!adminPassword) {
+        alert("Please enter the Admin Password at the top.");
+        return;
+      }
+
+      genBtn.textContent = "⏳ Generating...";
+      genBtn.disabled = true;
+
+      try {
+        const response = await fetch('/api/admin/generate', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + adminPassword
+          },
+          body: JSON.stringify({ productName, category })
+        });
+
+        if (response.status === 401) throw new Error("Invalid password!");
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        
+        sheepTake.value = data.text;
+      } catch (err) {
+        alert("Generation failed: " + err.message);
+      } finally {
+        genBtn.textContent = "✨ Auto-Generate with Gemini";
+        genBtn.disabled = false;
+      }
+    });
+
     document.getElementById('productForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       
       const form = e.target;
       const btn = document.getElementById('submitBtn');
       const statusDiv = document.getElementById('statusMessage');
+      const adminPassword = document.getElementById('adminPassword').value;
       
       const formData = new FormData(form);
       
@@ -163,6 +214,9 @@
       try {
         const response = await fetch('/api/admin/products', {
           method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + adminPassword
+          },
           body: formData
         });
 
