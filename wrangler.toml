@@ -6,7 +6,7 @@ assets = { directory = "./public" }
 [[d1_databases]]
 binding = "DB"
 database_name = "herdmentality-db"
-database_id = "2c1fce2e-0bf5-414f-b280-2a405b1223d8"
+database_id = "2e51338a-dba8-4568-a413-273b1c90db38"
 
 [[r2_buckets]]
 binding = "IMAGES"
