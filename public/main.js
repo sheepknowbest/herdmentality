@@ -16,7 +16,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (!currentCategory) {
     // HOME PAGE
-    // 1. Render Category Navigation as a sleek horizontal scroll
+    // 1. Render Category Navigation as a sleek grid
+    const navWrapper = document.createElement('div');
+    navWrapper.className = 'category-nav-wrapper';
+    
+    const navTitle = document.createElement('h2');
+    navTitle.className = 'category-nav-title';
+    navTitle.textContent = 'Browse Categories';
+    navWrapper.appendChild(navTitle);
+
     const navDiv = document.createElement('div');
     navDiv.className = 'category-nav';
     CATEGORIES.forEach(cat => {
@@ -26,7 +34,8 @@ document.addEventListener('DOMContentLoaded', () => {
       a.textContent = cat;
       navDiv.appendChild(a);
     });
-    navContainer.appendChild(navDiv);
+    navWrapper.appendChild(navDiv);
+    navContainer.appendChild(navWrapper);
 
     headerContainer.innerHTML = `<h2 class="page-title">✨ Flock Favorites</h2>`;
 
@@ -42,7 +51,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Render straight into the single grid
         data.forEach(p => {
-          const card = createProductCard(p, "🏆 #1 Most Reviewed in " + p.subCategory);
+          const badgeText = `🏆 #1 Most Reviewed<br><span style="font-size: 0.85em; font-weight: normal; opacity: 0.9;">in ${p.subCategory}</span>`;
+          const card = createProductCard(p, badgeText);
           gridContainer.appendChild(card);
         });
       })

@@ -94,39 +94,48 @@ body {
 }
 
 /* Category Navigation */
-.category-nav {
-  display: flex;
-  overflow-x: auto;
-  gap: 1rem;
-  padding-bottom: 1rem;
-  margin-bottom: 2rem;
-  white-space: nowrap;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none; /* Firefox */
+.category-nav-wrapper {
+  margin-bottom: 3rem;
 }
 
-.category-nav::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Edge */
+.category-nav-title {
+  text-align: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.8rem;
+  color: var(--deep-green);
+  margin-bottom: 1rem;
+}
+
+.category-nav {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.8rem;
 }
 
 .category-btn {
-  flex: 0 0 auto;
   background: var(--warm-white);
-  border: 2px solid var(--gold);
-  color: var(--deep-green);
-  padding: 0.6rem 1.2rem;
-  border-radius: 999px;
+  border: 1px solid var(--gold);
+  color: var(--charcoal);
+  padding: 0.8rem 0.5rem;
+  border-radius: 8px;
   font-weight: 600;
+  text-align: center;
   text-decoration: none;
   transition: all 0.2s ease;
   font-size: 0.9rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
 }
 
 .category-btn:hover {
-  background: var(--gold);
-  color: var(--darker-green);
+  background: var(--cream);
+  border-color: var(--deep-green);
+  color: var(--deep-green);
   transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.06);
 }
 
 .page-title {
@@ -223,6 +232,8 @@ main {
   align-self: flex-start;
   margin-bottom: 1rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  text-align: center;
+  line-height: 1.3;
 }
 
 .card-label {
