@@ -11,13 +11,12 @@ document.addEventListener('DOMContentLoaded', () => {
   
   const navContainer = document.getElementById('category-nav-container');
   const headerContainer = document.getElementById('page-header-container');
-  const gridContainer = document.getElementById('product-grid'); // We will replace gridContainer's role. We'll attach our sections to the parent of gridContainer instead.
-
+  const gridContainer = document.getElementById('product-grid');
   const mainContainer = gridContainer.parentElement;
 
   if (!currentCategory) {
     // HOME PAGE
-    // 1. Render Category Navigation
+    // 1. Render Category Navigation as a sleek horizontal scroll
     const navDiv = document.createElement('div');
     navDiv.className = 'category-nav';
     CATEGORIES.forEach(cat => {
@@ -29,47 +28,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     navContainer.appendChild(navDiv);
 
-    headerContainer.innerHTML = `<h2 class="page-title">✨ Cross-Category Flock Favorites</h2>`;
+    headerContainer.innerHTML = `<h2 class="page-title">✨ Flock Favorites</h2>`;
 
     // Fetch top 1 from all subcategories
     fetch('/api/products?favoritesOnly=true')
       .then(res => res.json())
       .then(data => {
-        // Group by Macro Category
-        const grouped = {};
-        data.forEach(p => {
-          if (!grouped[p.category]) grouped[p.category] = [];
-          grouped[p.category].push(p);
-        });
-
-        // Hide default grid
-        gridContainer.style.display = 'none';
-
-        // Render a section for each macro category
-        for (const [catName, products] of Object.entries(grouped)) {
-          const section = document.createElement('div');
-          section.className = 'category-section';
-          
-          const title = document.createElement('h2');
-          title.className = 'category-section-title';
-          title.textContent = catName;
-          section.appendChild(title);
-
-          const grid = document.createElement('div');
-          grid.className = 'grid-container';
-          
-          products.forEach(p => {
-            const card = createProductCard(p, "🏆 Best " + p.subCategory);
-            grid.appendChild(card);
-          });
-
-          section.appendChild(grid);
-          mainContainer.appendChild(section);
-        }
-        
+        gridContainer.innerHTML = '';
         if (data.length === 0) {
-           mainContainer.innerHTML += '<p style="text-align:center;">No products found. Check back soon!</p>';
+           gridContainer.innerHTML = '<p style="text-align:center; grid-column: 1 / -1;">No products found. Check back soon!</p>';
+           return;
         }
+
+        // Render straight into the single grid
+        data.forEach(p => {
+          const card = createProductCard(p, "🏆 #1 Most Reviewed in " + p.subCategory);
+          gridContainer.appendChild(card);
+        });
       })
       .catch(err => console.error(err));
 
@@ -113,9 +88,9 @@ document.addEventListener('DOMContentLoaded', () => {
           // Products are already sorted by reviewCount DESC from the API
           products.forEach((p, index) => {
             let badgeText = "Crowd-Approved";
-            if (index === 0) badgeText = "🏆 Best " + p.subCategory;
-            else if (index === 1) badgeText = "🥈 Runner-Up";
-            else if (index === 2) badgeText = "🥉 Honorable Mention";
+            if (index === 0) badgeText = "🏆 #1 Most Reviewed";
+            else if (index === 1) badgeText = "🥈 Highly Reviewed";
+            else if (index === 2) badgeText = "🥉 Crowd-Approved";
 
             const card = createProductCard(p, badgeText);
             grid.appendChild(card);

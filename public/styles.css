@@ -96,22 +96,30 @@ body {
 /* Category Navigation */
 .category-nav {
   display: flex;
-  flex-wrap: wrap;
+  overflow-x: auto;
   gap: 1rem;
-  justify-content: center;
-  margin-bottom: 3rem;
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+}
+
+.category-nav::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
 }
 
 .category-btn {
+  flex: 0 0 auto;
   background: var(--warm-white);
   border: 2px solid var(--gold);
   color: var(--deep-green);
-  padding: 0.8rem 1.5rem;
+  padding: 0.6rem 1.2rem;
   border-radius: 999px;
   font-weight: 600;
   text-decoration: none;
   transition: all 0.2s ease;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
