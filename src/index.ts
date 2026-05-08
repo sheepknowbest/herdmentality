@@ -31,11 +31,12 @@ export default {
       let finalResults = results;
       
       if (favoritesOnly === 'true') {
-         // Keep only the #1 product for each category
-         const seenCategories = new Set();
+         // Keep only the #1 product for each subCategory
+         const seenSubCategories = new Set();
          finalResults = results.filter((p: any) => {
-           if (!seenCategories.has(p.category)) {
-             seenCategories.add(p.category);
+           const key = `${p.category}-${p.subCategory}`;
+           if (!seenSubCategories.has(key)) {
+             seenSubCategories.add(key);
              return true;
            }
            return false;

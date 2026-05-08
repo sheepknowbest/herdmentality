@@ -1,8 +1,8 @@
 const CATEGORIES = [
-  "Movies, Music & Games", "Electronics", "Computers", "Smart Home",
-  "Home, Garden & Tools", "Pets", "Food & Grocery", "Beauty & Health",
-  "Toys, Kids & Baby", "Handmade", "Sports & Outdoors", "Automotive",
-  "Industrial and Scientific"
+  "Video Games", "Electronics", "Computers", "Smart Home",
+  "Home", "Garden", "Tools", "Pets", "Food & Grocery", 
+  "Beauty", "Health", "Toys", "Handmade", "Sports", 
+  "Outdoors", "Automotive", "Industrial and Scientific"
 ];
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -11,7 +11,9 @@ document.addEventListener('DOMContentLoaded', () => {
   
   const navContainer = document.getElementById('category-nav-container');
   const headerContainer = document.getElementById('page-header-container');
-  const gridContainer = document.getElementById('product-grid');
+  const gridContainer = document.getElementById('product-grid'); // We will replace gridContainer's role. We'll attach our sections to the parent of gridContainer instead.
+
+  const mainContainer = gridContainer.parentElement;
 
   if (!currentCategory) {
     // HOME PAGE
@@ -29,10 +31,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
     headerContainer.innerHTML = `<h2 class="page-title">✨ Cross-Category Flock Favorites</h2>`;
 
-    // Fetch top 1 from all categories
+    // Fetch top 1 from all subcategories
     fetch('/api/products?favoritesOnly=true')
       .then(res => res.json())
-      .then(data => renderGrid(data, true))
+      .then(data => {
+        // Group by Macro Category
+        const grouped = {};
+        data.forEach(p => {
+          if (!grouped[p.category]) grouped[p.category] = [];
+          grouped[p.category].push(p);
+        });
+
+        // Hide default grid
+        gridContainer.style.display = 'none';
+
+        // Render a section for each macro category
+        for (const [catName, products] of Object.entries(grouped)) {
+          const section = document.createElement('div');
+          section.className = 'category-section';
+          
+          const title = document.createElement('h2');
+          title.className = 'category-section-title';
+          title.textContent = catName;
+          section.appendChild(title);
+
+          const grid = document.createElement('div');
+          grid.className = 'grid-container';
+          
+          products.forEach(p => {
+            const card = createProductCard(p, "🏆 Best " + p.subCategory);
+            grid.appendChild(card);
+          });
+
+          section.appendChild(grid);
+          mainContainer.appendChild(section);
+        }
+        
+        if (data.length === 0) {
+           mainContainer.innerHTML += '<p style="text-align:center;">No products found. Check back soon!</p>';
+        }
+      })
       .catch(err => console.error(err));
 
   } else {
@@ -44,46 +82,72 @@ document.addEventListener('DOMContentLoaded', () => {
 
     fetch(`/api/products?category=${encodeURIComponent(currentCategory)}`)
       .then(res => res.json())
-      .then(data => renderGrid(data, false))
+      .then(data => {
+        gridContainer.style.display = 'none';
+
+        if (data.length === 0) {
+          mainContainer.innerHTML += '<p style="text-align:center;">No products found in this category yet. Check back soon!</p>';
+          return;
+        }
+
+        // Group by Sub-Category
+        const grouped = {};
+        data.forEach(p => {
+          if (!grouped[p.subCategory]) grouped[p.subCategory] = [];
+          grouped[p.subCategory].push(p);
+        });
+
+        // Render a section for each sub-category
+        for (const [subCatName, products] of Object.entries(grouped)) {
+          const section = document.createElement('div');
+          section.className = 'category-section';
+          
+          const title = document.createElement('h2');
+          title.className = 'category-section-title';
+          title.textContent = subCatName;
+          section.appendChild(title);
+
+          const grid = document.createElement('div');
+          grid.className = 'grid-container';
+          
+          // Products are already sorted by reviewCount DESC from the API
+          products.forEach((p, index) => {
+            let badgeText = "Crowd-Approved";
+            if (index === 0) badgeText = "🏆 Best " + p.subCategory;
+            else if (index === 1) badgeText = "🥈 Runner-Up";
+            else if (index === 2) badgeText = "🥉 Honorable Mention";
+
+            const card = createProductCard(p, badgeText);
+            grid.appendChild(card);
+          });
+
+          section.appendChild(grid);
+          mainContainer.appendChild(section);
+        }
+
+      })
       .catch(err => console.error(err));
   }
 
-  function renderGrid(data, isCrossCategory) {
-    gridContainer.innerHTML = ''; // Clear existing
-    if (data.length === 0) {
-      gridContainer.innerHTML = '<p style="text-align:center; grid-column: 1 / -1;">No products found in this category yet. Check back soon!</p>';
-      return;
-    }
-
-    data.forEach((product, index) => {
-      const card = document.createElement('div');
-      card.className = 'product-card';
-      
-      let badgeText = "Crowd-Approved";
-      if (isCrossCategory) {
-        badgeText = "🏆 Category Leader";
-      } else {
-        if (index === 0) badgeText = "🏆 The Flock Favorite";
-        else if (index === 1) badgeText = "🥈 Most Reviewed Runner-Up";
-        else if (index === 2) badgeText = "🥉 Reviewed by the Herd";
-      }
-
-      card.innerHTML = `
-        <div class="review-badge">${badgeText}</div>
-        <div class="card-label">${product.category} &gt; ${product.subCategory}</div>
-        <a href="${product.affiliateLink}" target="_blank" rel="noopener noreferrer" class="card-image-link">
-          <img src="${product.imageURL}" alt="${product.productName}" class="card-image" loading="lazy">
-        </a>
-        <h3 class="card-title">
-          <a href="${product.affiliateLink}" target="_blank" rel="noopener noreferrer">${product.productName}</a>
-        </h3>
-        <div class="sheeps-take">
-          <div class="sheeps-take-title">The Sheep's Take</div>
-          <p>${product.sheepTake}</p>
-        </div>
-        <a href="${product.affiliateLink}" target="_blank" rel="noopener noreferrer" class="primary-button">View on Amazon</a>
-      `;
-      gridContainer.appendChild(card);
-    });
+  function createProductCard(product, badgeText) {
+    const card = document.createElement('div');
+    card.className = 'product-card';
+    
+    card.innerHTML = `
+      <div class="review-badge">${badgeText}</div>
+      <div class="card-label">${product.category} &gt; ${product.subCategory}</div>
+      <a href="${product.affiliateLink}" target="_blank" rel="noopener noreferrer" class="card-image-link">
+        <img src="${product.imageURL}" alt="${product.productName}" class="card-image" loading="lazy">
+      </a>
+      <h3 class="card-title">
+        <a href="${product.affiliateLink}" target="_blank" rel="noopener noreferrer">${product.productName}</a>
+      </h3>
+      <div class="sheeps-take">
+        <div class="sheeps-take-title">The Sheep's Take</div>
+        <p>${product.sheepTake}</p>
+      </div>
+      <a href="${product.affiliateLink}" target="_blank" rel="noopener noreferrer" class="primary-button">View on Amazon</a>
+    `;
+    return card;
   }
 });

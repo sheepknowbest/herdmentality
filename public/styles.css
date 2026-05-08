@@ -129,6 +129,19 @@ body {
   margin-bottom: 2rem;
 }
 
+.category-section {
+  margin-bottom: 4rem;
+}
+
+.category-section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  color: var(--deep-green);
+  border-bottom: 2px solid var(--gold);
+  padding-bottom: 0.5rem;
+  margin-bottom: 2rem;
+}
+
 .back-btn {
   display: inline-block;
   margin-bottom: 2rem;
