@@ -13,11 +13,36 @@ export default {
     // 1. PUBLIC API: Fetch all products from D1
     // ==========================================
     if (request.method === "GET" && url.pathname === "/api/products") {
-      const { results } = await env.DB.prepare(
-        "SELECT * FROM products ORDER BY reviewCount DESC"
-      ).all();
+      const categoryQuery = url.searchParams.get("category");
+      const favoritesOnly = url.searchParams.get("favoritesOnly");
 
-      return new Response(JSON.stringify(results), {
+      let query = "SELECT * FROM products";
+      const params: any[] = [];
+
+      if (categoryQuery) {
+        query += " WHERE category = ?";
+        params.push(categoryQuery);
+      }
+      
+      query += " ORDER BY reviewCount DESC";
+
+      const { results } = await env.DB.prepare(query).bind(...params).all();
+      
+      let finalResults = results;
+      
+      if (favoritesOnly === 'true') {
+         // Keep only the #1 product for each category
+         const seenCategories = new Set();
+         finalResults = results.filter((p: any) => {
+           if (!seenCategories.has(p.category)) {
+             seenCategories.add(p.category);
+             return true;
+           }
+           return false;
+         });
+      }
+
+      return new Response(JSON.stringify(finalResults), {
         headers: { "Content-Type": "application/json" }
       });
     }
