@@ -283,11 +283,16 @@
         }
         let reviewBlock = window.getSelection().toString().trim();
         if (!reviewBlock) {
-          const aiSummary = document.querySelector('#product-summary-content, [data-hook="voice-of-customer-summary"]');
-          if (aiSummary) reviewBlock = aiSummary.innerText.trim();
-          if (!reviewBlock) {
-            const customerSay = Array.from(document.querySelectorAll('span, div')).find(el => el.textContent.includes('Customers say'));
-            if (customerSay) reviewBlock = customerSay.parentElement?.innerText.trim() || '';
+          const match = document.body.innerText.match(/(Customers say[\\s\\S]*?Select to learn more)/i);
+          if (match) {
+            reviewBlock = match[1].trim();
+          } else {
+            const aiSummary = document.querySelector('#product-summary-content, [data-hook="voice-of-customer-summary"]');
+            if (aiSummary) reviewBlock = aiSummary.innerText.trim();
+            if (!reviewBlock) {
+              const customerSay = Array.from(document.querySelectorAll('span, div')).find(el => el.textContent.includes('Customers say'));
+              if (customerSay) reviewBlock = customerSay.parentElement?.innerText.trim() || '';
+            }
           }
         }
         let asin = '';
