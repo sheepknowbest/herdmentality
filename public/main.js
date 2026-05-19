@@ -2,7 +2,7 @@ const CATEGORIES = [
   "Video Games", "Electronics", "Computers", "Smart Home",
   "Home", "Garden", "Tools", "Pets", "Food & Grocery", 
   "Beauty", "Health", "Toys", "Handmade", "Sports", 
-  "Outdoors", "Automotive", "Industrial and Scientific"
+  "Outdoors", "Automotive", "Industrial and Scientific", "Clothing"
 ];
 
 document.addEventListener('DOMContentLoaded', () => {
