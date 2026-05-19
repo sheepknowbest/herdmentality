@@ -140,6 +140,26 @@
       <input type="password" id="adminPassword" placeholder="Enter super secret password..." required>
     </div>
 
+    <!-- ⚡ Workflow Booster (Bookmarklet) -->
+    <div class="workflow-booster" style="background: #f0f4f8; border: 1px solid #d0e2ff; border-radius: 8px; padding: 1.2rem; margin: 1.5rem 0;">
+      <h3 style="margin-top: 0; margin-bottom: 0.5rem; color: #004085; display: flex; align-items: center; gap: 8px;">
+        ⚡ Workflow Booster (Bookmarklet)
+      </h3>
+      <p style="font-size: 0.85rem; margin-bottom: 1rem; color: #333; line-height: 1.4;">
+        Drag the button below to your Bookmarks Bar. When viewing an Amazon product, highlight the AI customer reviews summary, click the bookmarklet, and this form will auto-fill instantly.
+      </p>
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <label for="associateTag" style="font-size: 0.85rem; color: #004085; font-weight: bold; margin-bottom: 0.3rem;">Amazon Associate Tag</label>
+        <input type="text" id="associateTag" placeholder="e.g., sheepknowbest-20" style="padding: 0.5rem; font-size: 0.9rem;">
+      </div>
+      <div style="text-align: center;">
+        <a id="bookmarkletLink" href="#" style="display: inline-block; padding: 0.6rem 1.2rem; background: #007bff; color: #fff; text-decoration: none; font-weight: bold; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: grab;" onclick="return false;">
+          🐑 Publish to SKB
+        </a>
+        <div style="font-size: 0.75rem; color: #666; margin-top: 5px;">← Drag this button to your Bookmarks Bar</div>
+      </div>
+    </div>
+
     <hr style="border: 0; border-top: 1px solid var(--light-gray); margin: 2rem 0;">
 
     <div class="form-group">
@@ -154,11 +174,16 @@
     <form id="productForm">
       <input type="hidden" id="productId" name="id">
       <input type="hidden" id="existingImageURL" name="existingImageURL">
+      <input type="hidden" id="remoteImageURL" name="remoteImageURL">
 
       <div class="form-group">
         <label for="image">Upload Product Image (Optional if editing)</label>
         <input type="file" id="image" name="image" accept="image/*">
         <small id="currentImageHint" style="display:none; color:#666; margin-top:5px;">Leave empty to keep current image.</small>
+        <small id="remoteImageHint" style="display:none; color:#28a745; margin-top:5px; font-weight: bold;">✓ Using scraped image from Amazon URL.</small>
+        <div id="imagePreviewContainer" style="display:none; margin-top:10px; border: 1px solid var(--light-gray); border-radius: 6px; padding: 10px; text-align: center; max-height: 200px; overflow: hidden; background: #fff;">
+          <img id="imagePreview" src="" alt="Preview" style="max-height: 180px; max-width: 100%; object-fit: contain;">
+        </div>
       </div>
 
       <div class="form-group">
@@ -221,6 +246,169 @@
   <script>
     let productsList = [];
 
+    // Admin password persistence
+    const savedPassword = localStorage.getItem('skb_admin_password');
+    if (savedPassword) {
+      document.getElementById('adminPassword').value = savedPassword;
+    }
+
+    document.getElementById('adminPassword').addEventListener('input', (e) => {
+      localStorage.setItem('skb_admin_password', e.target.value);
+    });
+
+    // Associate tag persistence & bookmarklet generation
+    const savedTag = localStorage.getItem('skb_associate_tag') || 'sheepknowbest-20';
+    document.getElementById('associateTag').value = savedTag;
+
+    function updateBookmarklet() {
+      const tag = document.getElementById('associateTag').value.trim() || 'sheepknowbest-20';
+      localStorage.setItem('skb_associate_tag', tag);
+      const adminBaseUrl = window.location.origin + window.location.pathname;
+
+      const bookmarkletCode = `javascript:(function(){
+        const title = document.querySelector('#productTitle')?.innerText.trim() || '';
+        const reviewsText = document.querySelector('#acrCustomerReviewText, [data-hook="total-review-count"]')?.innerText || '';
+        const reviewCount = reviewsText.replace(/[^0-9]/g, '');
+        let imageUrl = '';
+        const img = document.querySelector('#landingImage, #imgBlkFront, #main-image, #ebooksImgBlk');
+        if (img) {
+          const dynamicAttr = img.getAttribute('data-a-dynamic-image');
+          if (dynamicAttr) {
+            try {
+              const urls = Object.keys(JSON.parse(dynamicAttr));
+              if (urls.length > 0) imageUrl = urls[urls.length - 1];
+            } catch(e){}
+          }
+          if (!imageUrl) imageUrl = img.src;
+        }
+        let reviewBlock = window.getSelection().toString().trim();
+        if (!reviewBlock) {
+          const aiSummary = document.querySelector('#product-summary-content, [data-hook="voice-of-customer-summary"]');
+          if (aiSummary) reviewBlock = aiSummary.innerText.trim();
+          if (!reviewBlock) {
+            const customerSay = Array.from(document.querySelectorAll('span, div')).find(el => el.textContent.includes('Customers say'));
+            if (customerSay) reviewBlock = customerSay.parentElement?.innerText.trim() || '';
+          }
+        }
+        let asin = '';
+        const asinEl = document.querySelector('#ASIN, input[name="ASIN"], input[name="itemId"]');
+        if (asinEl) {
+          asin = asinEl.value;
+        } else {
+          const m = window.location.href.match(/\\/dp\\/([A-Z0-9]{10})/i) || window.location.href.match(/\\/gp\\/product\\/([A-Z0-9]{10})/i);
+          if (m) asin = m[1];
+        }
+        const affLink = asin ? \`https://www.amazon.com/dp/\${asin}/?tag=${tag}\` : window.location.href;
+        const breadcrumbs = Array.from(document.querySelectorAll('#wayfinding-breadcrumbs_container ul li a, #showing-breadcrumbs_div a')).map(el => el.innerText.trim()).join(',');
+
+        const adminUrl = new URL('${adminBaseUrl}');
+        adminUrl.searchParams.set('prefill', '1');
+        adminUrl.searchParams.set('name', title);
+        adminUrl.searchParams.set('reviews', reviewCount);
+        adminUrl.searchParams.set('imageUrl', imageUrl);
+        adminUrl.searchParams.set('affLink', affLink);
+        adminUrl.searchParams.set('reviewBlock', reviewBlock);
+        adminUrl.searchParams.set('breadcrumbs', breadcrumbs);
+
+        window.open(adminUrl.toString(), '_blank');
+      })();`;
+
+      document.getElementById('bookmarkletLink').href = bookmarkletCode.replace(/\s+/g, ' ');
+    }
+
+    document.getElementById('associateTag').addEventListener('input', updateBookmarklet);
+    updateBookmarklet(); // initial generation
+
+    // Image Upload Preview Listener
+    document.getElementById('image').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          document.getElementById('imagePreview').src = event.target.result;
+          document.getElementById('imagePreviewContainer').style.display = 'block';
+          document.getElementById('remoteImageHint').style.display = 'none';
+          document.getElementById('remoteImageURL').value = ''; // Clear remote URL if file is uploaded manually
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Amazon breadcrumb category mapping helper
+    function mapAmazonCategory(breadcrumbsStr) {
+      if (!breadcrumbsStr) return '';
+      const breadcrumbs = breadcrumbsStr.split(',').map(b => b.toLowerCase().trim());
+
+      const mappings = [
+        { keywords: ['video games', 'playstation', 'xbox', 'nintendo', 'gaming console'], category: 'Video Games' },
+        { keywords: ['smart home', 'alexa', 'smart assistant'], category: 'Smart Home' },
+        { keywords: ['computers', 'laptops', 'pc components', 'accessories', 'monitors', 'networking'], category: 'Computers' },
+        { keywords: ['electronics', 'television', 'audio', 'camera', 'headphones', 'gps'], category: 'Electronics' },
+        { keywords: ['garden', 'patio', 'lawn', 'plants', 'outdoor living'], category: 'Garden' },
+        { keywords: ['tools', 'improvement', 'hardware', 'plumbing', 'electrical'], category: 'Tools' },
+        { keywords: ['pet supplies', 'pets', 'dog', 'cat', 'fish', 'bird'], category: 'Pets' },
+        { keywords: ['grocery', 'food', 'gourmet', 'beverage', 'pantry'], category: 'Food & Grocery' },
+        { keywords: ['beauty', 'cosmetics', 'makeup', 'fragrance', 'skin care'], category: 'Beauty' },
+        { keywords: ['health', 'household', 'personal care', 'vitamins', 'supplement', 'medical'], category: 'Health' },
+        { keywords: ['toys', 'games', 'board games', 'dolls'], category: 'Toys' },
+        { keywords: ['handmade'], category: 'Handmade' },
+        { keywords: ['outdoor', 'camping', 'hiking', 'climbing', 'cycling'], category: 'Outdoors' },
+        { keywords: ['sports', 'fitness', 'athletic', 'exercise'], category: 'Sports' },
+        { keywords: ['automotive', 'car', 'motorcycle', 'tires'], category: 'Automotive' },
+        { keywords: ['industrial', 'scientific', 'lab', 'medical supplies'], category: 'Industrial and Scientific' },
+        { keywords: ['home', 'kitchen', 'furniture', 'bedding', 'bath'], category: 'Home' }
+      ];
+
+      for (const map of mappings) {
+        if (breadcrumbs.some(bc => map.keywords.some(kw => bc.includes(kw)))) {
+          return map.category;
+        }
+      }
+      return '';
+    }
+
+    // Prefill logic
+    function checkPrefill() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('prefill') === '1') {
+        const name = params.get('name') || '';
+        const reviews = params.get('reviews') || '';
+        const imageUrl = params.get('imageUrl') || '';
+        const affLink = params.get('affLink') || '';
+        const reviewBlock = params.get('reviewBlock') || '';
+        const breadcrumbs = params.get('breadcrumbs') || '';
+
+        if (name) document.getElementById('productName').value = name;
+        if (reviews) document.getElementById('reviewCount').value = reviews;
+        if (affLink) document.getElementById('affiliateLink').value = affLink;
+        if (reviewBlock) document.getElementById('sheepTake').value = reviewBlock;
+
+        if (imageUrl) {
+          document.getElementById('remoteImageURL').value = imageUrl;
+          document.getElementById('imagePreview').src = imageUrl;
+          document.getElementById('imagePreviewContainer').style.display = 'block';
+          document.getElementById('remoteImageHint').style.display = 'block';
+        }
+
+        if (breadcrumbs) {
+          const category = mapAmazonCategory(breadcrumbs);
+          if (category) {
+            document.getElementById('category').value = category;
+          }
+
+          const bcArray = breadcrumbs.split(',').map(b => b.trim());
+          if (bcArray.length > 0) {
+            const sub = bcArray[bcArray.length - 1];
+            if (category && sub.toLowerCase() === category.toLowerCase() && bcArray.length > 1) {
+              document.getElementById('subCategory').value = bcArray[bcArray.length - 2];
+            } else {
+              document.getElementById('subCategory').value = sub;
+            }
+          }
+        }
+      }
+    }
+
     // Load existing products into dropdown
     async function loadProducts() {
       try {
@@ -256,9 +444,13 @@
         form.reset();
         document.getElementById('productId').value = '';
         document.getElementById('existingImageURL').value = '';
+        document.getElementById('remoteImageURL').value = '';
         editIndicator.style.display = 'none';
         deleteBtn.style.display = 'none';
         currentImageHint.style.display = 'none';
+        document.getElementById('remoteImageHint').style.display = 'none';
+        document.getElementById('imagePreviewContainer').style.display = 'none';
+        document.getElementById('imagePreview').src = '';
         submitBtn.textContent = 'Publish New Product';
         return;
       }
@@ -268,6 +460,7 @@
       if (p) {
         document.getElementById('productId').value = p.id;
         document.getElementById('existingImageURL').value = p.imageURL;
+        document.getElementById('remoteImageURL').value = '';
         document.getElementById('category').value = p.category;
         document.getElementById('subCategory').value = p.subCategory;
         document.getElementById('productName').value = p.productName;
@@ -275,9 +468,18 @@
         document.getElementById('affiliateLink').value = p.affiliateLink;
         document.getElementById('sheepTake').value = p.sheepTake;
         
+        if (p.imageURL) {
+          document.getElementById('imagePreview').src = p.imageURL;
+          document.getElementById('imagePreviewContainer').style.display = 'block';
+        } else {
+          document.getElementById('imagePreviewContainer').style.display = 'none';
+          document.getElementById('imagePreview').src = '';
+        }
+
         editIndicator.style.display = 'block';
         deleteBtn.style.display = 'block';
         currentImageHint.style.display = 'block';
+        document.getElementById('remoteImageHint').style.display = 'none';
         submitBtn.textContent = 'Update Product';
       }
     });
@@ -343,8 +545,9 @@
 
       // Check if image is required (new product)
       const imageFile = document.getElementById('image').files[0];
+      const remoteImageURL = document.getElementById('remoteImageURL').value;
       const isEditing = !!document.getElementById('productId').value;
-      if (!isEditing && !imageFile) {
+      if (!isEditing && !imageFile && !remoteImageURL) {
         alert("An image is required for new products.");
         return;
       }
@@ -370,7 +573,13 @@
           statusDiv.className = 'message success';
           statusDiv.textContent = result.message;
           statusDiv.style.display = 'block';
-          if (!isEditing) form.reset();
+          if (!isEditing) {
+            form.reset();
+            document.getElementById('remoteImageURL').value = '';
+            document.getElementById('remoteImageHint').style.display = 'none';
+            document.getElementById('imagePreviewContainer').style.display = 'none';
+            document.getElementById('imagePreview').src = '';
+          }
           loadProducts(); // refresh the list
         } else {
           throw new Error(result.error || 'Unknown error occurred.');
@@ -426,7 +635,9 @@
     });
 
     // Initialize
-    loadProducts();
+    loadProducts().then(() => {
+      checkPrefill();
+    });
   </script>
 </body>
 </html>

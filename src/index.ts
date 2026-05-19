@@ -151,9 +151,10 @@ export default {
         const sheepTake = formData.get("sheepTake")?.toString() || "";
         const imageFile = formData.get("image") as File | null;
         let imageURL = formData.get("existingImageURL")?.toString() || "";
+        const remoteImageURL = formData.get("remoteImageURL")?.toString() || "";
 
-        if (!id && (!imageFile || !imageFile.name)) {
-          return new Response(JSON.stringify({ error: "Missing image file for new product" }), { 
+        if (!id && (!imageFile || !imageFile.name) && !remoteImageURL) {
+          return new Response(JSON.stringify({ error: "Missing image file or remote image URL for new product" }), { 
             status: 400, headers: { "Content-Type": "application/json" } 
           });
         }
@@ -166,6 +167,37 @@ export default {
           
           await env.IMAGES.put(imageName, imageFile.stream(), {
             httpMetadata: { contentType: imageFile.type }
+          });
+
+          imageURL = `/images/${imageName}`;
+        } else if (remoteImageURL) {
+          const imgResponse = await fetch(remoteImageURL, {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            }
+          });
+          if (!imgResponse.ok) {
+            throw new Error(`Failed to fetch image from URL (${imgResponse.status}): ${imgResponse.statusText}`);
+          }
+          const contentType = imgResponse.headers.get("content-type") || "image/jpeg";
+          let extension = "jpg";
+          if (contentType.includes("png")) {
+            extension = "png";
+          } else if (contentType.includes("webp")) {
+            extension = "webp";
+          } else if (contentType.includes("gif")) {
+            extension = "gif";
+          }
+          
+          const uniqueId = crypto.randomUUID();
+          const imageName = `${uniqueId}.${extension}`;
+          
+          if (!imgResponse.body) {
+            throw new Error("No image body content returned from URL");
+          }
+          
+          await env.IMAGES.put(imageName, imgResponse.body, {
+            httpMetadata: { contentType }
           });
 
           imageURL = `/images/${imageName}`;
